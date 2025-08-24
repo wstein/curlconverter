@@ -255,6 +255,11 @@ const converters = {
     extension: ".sh",
     converter: curlconverter.toWget,
   },
+  xh: {
+    name: "Xh",
+    extension: ".sh",
+    converter: curlconverter.toXh,
+  },
   parser: {
     name: "Parser",
     extension: ".json",

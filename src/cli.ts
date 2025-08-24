@@ -249,6 +249,11 @@ import {
   toWgetWarn,
   supportedArgs as supportedArgsWget,
 } from "./generators/wget.js";
+import {
+  _toXh,
+  toXhWarn,
+  supportedArgs as supportedArgsXh,
+} from "./generators/xh.js";
 
 import fs from "fs";
 
@@ -343,6 +348,7 @@ const translate: {
   rust: [_toRust, toRustWarn, supportedArgsRust],
   swift: [_toSwift, toSwiftWarn, supportedArgsSwift],
   wget: [_toWget, toWgetWarn, supportedArgsWget],
+  xh: [_toXh, toXhWarn, supportedArgsXh],
 };
 
 const USAGE = `Usage: curlconverter [--language <language>] [-] [curl_options...]
@@ -395,6 +401,7 @@ language: the language to convert the curl command to. The choices are
   rust
   swift
   wget
+  xh
 
 -: read curl command from stdin
 

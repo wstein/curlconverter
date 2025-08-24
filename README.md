@@ -1,6 +1,6 @@
 # [curlconverter](https://curlconverter.com)
 
-Transpile [`curl`](https://en.wikipedia.org/wiki/CURL) commands into C, C#, ColdFusion, Clojure, Dart, Elixir, Go, HTTPie, Java, JavaScript, Julia, Kotlin, Lua, MATLAB, Objective-C, OCaml, Perl, PHP, PowerShell, Python, R, Ruby, Rust, Swift, Wget, Ansible, HAR, HTTP or JSON.
+Transpile [`curl`](https://en.wikipedia.org/wiki/CURL) commands into C, C#, ColdFusion, Clojure, Dart, Elixir, Go, HTTPie, Java, JavaScript, Julia, Kotlin, Lua, MATLAB, Objective-C, OCaml, Perl, PHP, PowerShell, Python, R, Ruby, Rust, Swift, Wget, xh, Ansible, HAR, HTTP or JSON.
 
 Try it on [curlconverter.com](https://curlconverter.com) or as a drop-in `curl` replacement:
 
@@ -110,6 +110,7 @@ Choose the output language by passing `--language <language>`. The options are
 - `rust`
 - `swift`
 - `wget`
+- `xh`
 
 `--verbose` enables printing of conversion warnings and error tracebacks.
 

@@ -97,7 +97,17 @@ function escapeJsonStr(value: string): string {
         ". xh cannot send a string that starts with \\=",
     );
   }
-  return value.replace("=", "\\=");
+  if (value.startsWith("\\@")) {
+    throw new CCError(
+      "Unrepresentable JSON string: " +
+        JSON.stringify(value) +
+        ' (starts with "\\@")',
+    );
+  }
+  if (value.startsWith("=") || value.startsWith("@")) {
+    value = "\\" + value;
+  }
+  return value;
 }
 
 function urlencodedAsXh(flags: string[], items: string[], data: Word) {
@@ -283,6 +293,10 @@ function requestToXh(
     flags.push("--verify=" + repr(request.cacert));
   }
 
+  if (request.capath) {
+    flags.push("--verify=" + repr(request.capath));
+  }
+
   if (request.cert) {
     flags.push("--cert=" + repr(request.cert[0]));
   }
@@ -297,12 +311,38 @@ function requestToXh(
 
   // Proxy
   if (request.proxy) {
-    flags.push("--proxy " + repr(request.proxy));
+    flags.push("--proxy=http:" + repr(request.proxy));
+    flags.push("--proxy=https:" + repr(request.proxy));
   }
 
   // Timeout
+  if (request.connectTimeout) {
+    flags.push("--timeout=" + repr(request.connectTimeout));
+  }
   if (request.timeout) {
-    flags.push("--timeout=" + repr(request.timeout));
+    if (request.connectTimeout) {
+      warnings.push([
+        "xh-timeout-with-connect-timeout",
+        "ignoring --timeout because xh's timeout is more similar to curl's --connect-timeout",
+      ]);
+    } else {
+      flags.push("--timeout=" + repr(request.timeout));
+      // warn that this is not for the whole request
+      warnings.push([
+        "xh-timeout",
+        "xh's timeout is just for the connection, not for the whole request",
+      ]);
+    }
+  }
+
+  // Query parameters - add before data handling
+  if (url.queryList) {
+    urlArg = url.urlWithoutQueryList;
+    for (const [name, value] of url.queryList) {
+      items.push(
+        repr(mergeWords(escapeQueryName(name), "==", escapeQueryValue(value))),
+      );
+    }
   }
 
   // Data handling
@@ -345,28 +385,21 @@ function requestToXh(
     formatDataXh(flags, items, request.data, request.headers);
   }
 
-  // Query parameters
-  if (url.queryList) {
-    urlArg = url.urlWithoutQueryList;
-    for (const [name, value] of url.queryList) {
-      items.push(
-        repr(mergeWords(escapeQueryName(name), "==", escapeQueryValue(value))),
-      );
-    }
-  }
-
   // Redirects
   if (request.followRedirects || request.followRedirectsTrusted) {
     flags.push("--follow");
   }
 
   if (request.maxRedirects && request.maxRedirects.toString() !== "30") {
-    flags.push("--max-redirects " + repr(request.maxRedirects));
+    flags.push("--max-redirects=" + repr(request.maxRedirects));
   }
 
   // Verbose output
   if (request.verbose) {
     flags.push("--verbose");
+  }
+  if (request.silent) {
+    flags.push("--quiet");
   }
 
   // Build command
@@ -379,13 +412,18 @@ function requestToXh(
     return u;
   }
 
-  if (urlArg.startsWith("https://")) {
+  let command = "xh";
+  let originalUrl = urlArg.toString();
+
+  if (originalUrl.startsWith("https://")) {
     urlArg = localhostShorthand(urlArg.slice("https://".length));
-  } else if (urlArg.startsWith("http://")) {
+    // Use xhs (HTTPS default) when dealing with HTTPS URLs that have cert+key+ca combination
+    if (request.cert && request.key && (request.cacert || request.capath)) {
+      command = "xhs";
+    }
+  } else if (originalUrl.startsWith("http://")) {
     urlArg = localhostShorthand(urlArg.slice("http://".length));
   }
-
-  const command = "xh";
   const args = [...flags];
   if (method) {
     args.push(method);
